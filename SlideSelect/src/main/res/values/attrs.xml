@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SlideSelect">
+        <attr name="backgroundColor" format="reference"/>
+        <attr name="itemString" format="reference"/>
+        <attr name="selectedColor" format="reference"/>
+        <attr name="normalColor" format="reference"/>
+        <attr name="selectedSize" format="dimension"/>
+        <attr name="normalSize" format="dimension"/>
+        <attr name="corner" format="dimension"/>
+        <attr name="multyChooseMode" format="boolean"/>
+    </declare-styleable>
+
+</resources>
