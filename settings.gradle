@@ -1,1 +1,1 @@
-include ':app', ':SlideSelect'
+include ':app', ':SweepSelect'

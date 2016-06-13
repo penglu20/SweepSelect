@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="100dp" />
 
-    <com.pl.slideselect.SlideSelect
+    <com.pl.sweepselect.SweepSelect
         android:id="@+id/select_week"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
         android:layout_height="100dp"
         android:layout_marginTop="50dp" />
 
-    <com.pl.slideselect.SlideSelect
+    <com.pl.sweepselect.SweepSelect
         android:id="@+id/select_week2"
         android:layout_width="match_parent"
         android:layout_height="80dp"

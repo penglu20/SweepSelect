@@ -1,4 +1,4 @@
-package com.pl.slideselect;
+package com.pl.sweepselect;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -13,14 +13,12 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Scroller;
 
-import com.pl.multychooseview.R;
 
 /**
  * Created by penglu on 2016/5/22.
  */
-public class SlideSelect extends View {
+public class SweepSelect extends View {
     //默认属性
     private static final int DEFAULT_BG_COLOR =0;
     private static final int DEFAULT_SELECTED_COLOR =-1;
@@ -59,47 +57,47 @@ public class SlideSelect extends View {
     //选中结果回调函数
     private onSelectResultListener onSelectResultListener;
 
-    public SlideSelect(Context context) {
+    public SweepSelect(Context context) {
         super(context);
         initView(context,null);
     }
 
-    public SlideSelect(Context context, AttributeSet attrs) {
+    public SweepSelect(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView(context,attrs);
     }
 
-    public SlideSelect(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SweepSelect(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initView(context,attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public SlideSelect(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public SweepSelect(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         initView(context,attrs);
     }
 
     private void initView(Context context,AttributeSet attrs){
-        TypedArray typedArray=context.obtainStyledAttributes(attrs,R.styleable.SlideSelect);
+        TypedArray typedArray=context.obtainStyledAttributes(attrs,R.styleable.SweepSelect);
         int length=typedArray.getIndexCount();
         for (int i=0;i<length;i++){
             int type = typedArray.getIndex(i);
-            if (type == R.styleable.SlideSelect_backgroundColor) {
+            if (type == R.styleable.SweepSelect_backgroundColor) {
                 backgroundColor=typedArray.getColor(i, DEFAULT_BG_COLOR);
-            }else if (type==R.styleable.SlideSelect_itemString){
+            }else if (type==R.styleable.SweepSelect_itemString){
                 itemStrings=typedArray.getTextArray(i);
-            }else if (type==R.styleable.SlideSelect_selectedColor){
+            }else if (type==R.styleable.SweepSelect_selectedColor){
                 selectedColor=typedArray.getColor(i, DEFAULT_SELECTED_COLOR);
-            }else if (type==R.styleable.SlideSelect_normalColor){
+            }else if (type==R.styleable.SweepSelect_normalColor){
                 normalColor=typedArray.getColor(i, DEFAULT_NORMAL_COLOR);
-            }else if (type==R.styleable.SlideSelect_selectedSize){
+            }else if (type==R.styleable.SweepSelect_selectedSize){
                 selectedSize=typedArray.getDimensionPixelSize(i,DEFAULT_TEXT_SIZE);
-            }else if (type==R.styleable.SlideSelect_normalSize){
+            }else if (type==R.styleable.SweepSelect_normalSize){
                 normalSize=typedArray.getDimensionPixelSize(i,DEFAULT_TEXT_SIZE);
-            }else if (type==R.styleable.SlideSelect_corner){
+            }else if (type==R.styleable.SweepSelect_corner){
                 corner=typedArray.getDimensionPixelSize(i,DEFAULT_CORNER);
-            }else if (type==R.styleable.SlideSelect_multyChooseMode){
+            }else if (type==R.styleable.SweepSelect_multyChooseMode){
                 isMultyChooseMode=typedArray.getBoolean(i,false);
             }
         }
@@ -291,14 +289,27 @@ public class SlideSelect extends View {
         }
     }
 
+
     public interface onSelectResultListener{
+        /**
+         * 选择结果的回调函数，通知回调方每个条目的选择情况
+         * @param selections
+         */
         void select(boolean[] selections);
     }
 
-    public void setOnSelectResultListener(SlideSelect.onSelectResultListener onSelectResultListener) {
+    /**
+     * 设置选择结果的回调接口
+     * @param onSelectResultListener
+     */
+    public void setOnSelectResultListener(SweepSelect.onSelectResultListener onSelectResultListener) {
         this.onSelectResultListener = onSelectResultListener;
     }
 
+    /**
+     * 设置当前各个条目的选中状态
+     * @param selections 对应于每个条目的选择状态，数组长度等于条目数量
+     */
     public void setCurrentSelection(boolean[] selections) {
         if (selections.length!=items.length){
             return;
@@ -313,78 +324,142 @@ public class SlideSelect extends View {
         invalidate();
     }
 
+    /**
+     * 获取当前是否为多选模式
+     * @return true为多选模式，false为单选模式
+     */
     public boolean isMultyChooseMode() {
         return isMultyChooseMode;
     }
 
+    /**
+     * 设置多选或单选模式
+     * @param multyChooseMode true为多选模式，false为单选模式
+     */
     public void setMultyChooseMode(boolean multyChooseMode) {
         isMultyChooseMode = multyChooseMode;
     }
 
+    /**
+     * 获取文字在未选中状态下的字体大小，单位为像素
+     * @return
+     */
     public int getNormalSize() {
         return normalSize;
     }
 
+    /**
+     * 设置文字在未选中状态下的字体大小，单位为像素
+     * @param normalSize
+     */
     public void setNormalSize(int normalSize) {
         this.normalSize = normalSize;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取文字在未选中状态下的字体颜色，argb表示
+     * @return
+     */
     public int getNormalColor() {
         return normalColor;
     }
 
+    /**
+     * 设置文字在未选中状态下的字体颜色，argb表示
+     * @param normalColor
+     */
     public void setNormalColor(int normalColor) {
         this.normalColor = normalColor;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取文字在选中状态下的字体大小，单位为像素
+     * @return
+     */
     public int getSelectedSize() {
         return selectedSize;
     }
 
+    /**
+     * 设置文字在选中状态下的字体大小，单位为像素
+     * @param selectedSize
+     */
     public void setSelectedSize(int selectedSize) {
         this.selectedSize = selectedSize;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取文字在选中状态下的字体颜色，argb表示
+     * @return
+     */
     public int getSelectedColor() {
         return selectedColor;
     }
 
+    /**
+     * 设置文字在选中状态下的字体颜色，argb表示
+     * @param selectedColor
+     */
     public void setSelectedColor(int selectedColor) {
         this.selectedColor = selectedColor;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取各待选项的文字表示
+     * @return CharSequence[]
+     */
     public CharSequence[] getItemStrings() {
         return itemStrings;
     }
 
+    /**
+     * 设置各待选项的文字表示
+     * @param  itemStrings 每一个元素为一个带选项，各元素长度应该在3个字符以内，否则不好看
+     */
     public void setItemStrings(CharSequence[] itemStrings) {
         this.itemStrings = itemStrings;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取背景的圆角半径，单位为像素
+     * @return
+     */
     public int getCorner() {
         return corner;
     }
 
+    /**
+     * 设置背景的圆角半径，单位为像素
+     * @param corner
+     */
     public void setCorner(int corner) {
         this.corner = corner;
         prepareDrawing();
         requestLayout();
     }
 
+    /**
+     * 获取背景的颜色，argb表示
+     * @return
+     */
     public int getBackgroundColor() {
         return backgroundColor;
     }
 
+    /**
+     * 设置背景的颜色，argb表示
+     * @param backgroundColor
+     */
     @Override
     public void setBackgroundColor(int backgroundColor) {
         this.backgroundColor = backgroundColor;
