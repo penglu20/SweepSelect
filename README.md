@@ -8,7 +8,16 @@
 ![multy select mode](https://raw.githubusercontent.com/l465659833/SweepSelect/master/art/multi_select.gif)
 
 
-##如何使用
+#How To Use 如何使用
+
+add to your build.gradle files:
+
+```
+dependencies {
+    compile 'com.pl:SweepSelect:0.1'
+}
+```
+
 在layout中添加：
 ```
     <com.pl.sweepselect.SweepSelect
