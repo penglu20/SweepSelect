@@ -146,8 +146,6 @@ public class SweepSelect extends View {
         }else if (heightMode==MeasureSpec.UNSPECIFIED){
             int height= textRect.height()*3/2+corner;
             heightMeasureSpec=MeasureSpec.makeMeasureSpec(height,heightMode);
-        }else {
-
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
@@ -194,6 +192,7 @@ public class SweepSelect extends View {
         switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
                 getParent().requestDisallowInterceptTouchEvent(true);
+                //防止父View抢夺触摸焦点，导致触摸事件失效
                 lastX=event.getX();
                 currentDirection =DIRECTION_NON;
                 checkSelect(event);
