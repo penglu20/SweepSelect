@@ -14,7 +14,7 @@ add to your build.gradle files:
 
 ```
 dependencies {
-    compile 'com.pl:SweepSelect:0.1'
+    compile 'com.pl:SweepSelect:0.2'
 }
 ```
 
@@ -24,8 +24,6 @@ dependencies {
         android:id="@+id/select_week"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:backgroundColor="#515050"
-        app:corner="4dp"
         app:itemString="@array/multyChooseArray"
         app:multyChooseMode="true"
         app:normalColor="#ffffff"
@@ -52,14 +50,16 @@ dependencies {
 
 | attr 属性          | description 描述 |
 |:---				 |:---|
-| backgroundColor  	     | 背景的颜色，argb表示 |
 | itemString  	     | 各待选项的文本的数组 |
 | selectedColor	 	 | 被选中文本颜色 |
 | normalColor 		 | 未选中文本颜色 |
 | selectedSize 			 |  被选中文本字体大小 |
 | normalSize 	 |  未选中文本字体大小 |
-| corner 	 | 背景的圆角半径 |
 | multyChooseMode | 是否为多选模式，true为多选模式，false为单选模式 |
+| singleLine | 是否为单行，true为单行模式，false为多行模式 |
+| numberEachLine | 多行模式下，每一行的带选项数量 |
+| spaceEachLine |  每一行之间的间距（上一行文字底部到下一行文字顶部间距） |
+| emptyPrefix | 第一行的空白前缀的数量 |
 
 ## Method
 ```java
@@ -147,27 +147,47 @@ dependencies {
      */
     public void setItemStrings(CharSequence[] itemStrings);
 
-    /**
-     * 获取背景的圆角半径，单位为像素
-     * @return
+     /**
+     * 是否单行显示
      */
-    public int getCorner();
+    public boolean isSingleLine();
+    /**
+     * 设置是否单行显示
+     * @param singleLine true为单行显示
+     */
+    public void setSingleLine(boolean singleLine) ;
 
     /**
-     * 设置背景的圆角半径，单位为像素
-     * @param corner
+     * 获取每行显示数量，默认是7
      */
-    public void setCorner(int corner);
+    public int getNumberEachLine() ;
 
     /**
-     * 获取背景的颜色，argb表示
-     * @return
+     * 设置每行显示数量，默认是7
+     * @param numberEachLine
      */
-    public int getBackgroundColor();
+    public void setNumberEachLine(int numberEachLine);
 
     /**
-     * 设置背景的颜色，argb表示
-     * @param backgroundColor
+     * 获取每行间的距离，默认是文字高度的一半
      */
-    public void setBackgroundColor(int backgroundColor);
+    public int getSpaceEachLine();
+
+    /**
+     * 设置每行间的距离，默认是文字高度的一半
+     * @param spaceEachLine
+     */
+    public void setSpaceEachLine(int spaceEachLine);
+
+    /**
+     * 获取第一行的第一行的空白前缀的数量
+     */
+    public int getEmptyPrefix();
+
+    /**
+     * 设置第一行的第一行的空白前缀的数量
+     * @param emptyPrefix
+     */
+    public void setEmptyPrefix(int emptyPrefix);
+
 ```

@@ -4,9 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.os.Build;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -20,39 +18,49 @@ import android.view.View;
  */
 public class SweepSelect extends View {
     //默认属性
-    private static final int DEFAULT_BG_COLOR =0;
     private static final int DEFAULT_SELECTED_COLOR =-1;
     private static final int DEFAULT_NORMAL_COLOR =7500402;
     private static final int DEFAULT_TEXT_SIZE=30;
-    private static final int DEFAULT_CORNER=4;
+    private static final int DEFAULT_NUMBER_EACH_LINE=7;
+    private static final int DEFAULT_EMPTY_PREFIX=0;
 
     //标示移动的方向，用于在连续左右滑动中改变是否选中
     private static final int DIRECTION_LEFT=1001;
     private static final int DIRECTION_RIGHT=1002;
     private static final int DIRECTION_NON=1003;
 
+    private static final int DIRECTION_UP=1004;
+    private static final int DIRECTION_DOWN=1005;
+
     //最小滑动距离，超过此距离才重新判断是否选中
     private static final float MIN_SCROLL_DISTANCE=20;
 
     //记录设置的属性变量
-    private int backgroundColor=DEFAULT_BG_COLOR;
-    private int corner=DEFAULT_CORNER;
     private CharSequence[] itemStrings;
     private int selectedColor=DEFAULT_SELECTED_COLOR;
     private int selectedSize=DEFAULT_TEXT_SIZE;
     private int normalColor=DEFAULT_NORMAL_COLOR;
     private int normalSize=DEFAULT_TEXT_SIZE;
     private boolean isMultyChooseMode=false;
+    private boolean singleLine=true;
+    private int numberEachLine=DEFAULT_NUMBER_EACH_LINE;
+    private int spaceEachLine=-1;
+    private int _spaceEachLine=-1;
+    private int emptyPrefix=DEFAULT_EMPTY_PREFIX;
 
     //绘制图像的中间变量
-    private Paint backgroundPaint;
     private TextPaint textPaint;
     private Rect textRect;
-    private RectF backgroundRect;
-    private int currentDirection = DIRECTION_NON;
+    private int totalHeight;
+    private boolean sizeHasChanged=true;
+    private int currentXDirection = DIRECTION_NON;
+    private int currentYDirection = DIRECTION_NON;
     private float lastX;
+    private float lastY;
 
     private Item[] items;
+
+    private int lines;
 
     //选中结果回调函数
     private onSelectResultListener onSelectResultListener;
@@ -79,26 +87,30 @@ public class SweepSelect extends View {
     }
 
     private void initView(Context context,AttributeSet attrs){
-        TypedArray typedArray=context.obtainStyledAttributes(attrs,R.styleable.SweepSelect);
+        TypedArray typedArray=context.obtainStyledAttributes(attrs, R.styleable.SweepSelect);
         int length=typedArray.getIndexCount();
         for (int i=0;i<length;i++){
             int type = typedArray.getIndex(i);
-            if (type == R.styleable.SweepSelect_backgroundColor) {
-                backgroundColor=typedArray.getColor(i, DEFAULT_BG_COLOR);
-            }else if (type==R.styleable.SweepSelect_itemString){
-                itemStrings=typedArray.getTextArray(i);
+            if (type==R.styleable.SweepSelect_itemString){
+                itemStrings=typedArray.getTextArray(type);
             }else if (type==R.styleable.SweepSelect_selectedColor){
-                selectedColor=typedArray.getColor(i, DEFAULT_SELECTED_COLOR);
+                selectedColor=typedArray.getColor(type, DEFAULT_SELECTED_COLOR);
             }else if (type==R.styleable.SweepSelect_normalColor){
-                normalColor=typedArray.getColor(i, DEFAULT_NORMAL_COLOR);
+                normalColor=typedArray.getColor(type, DEFAULT_NORMAL_COLOR);
             }else if (type==R.styleable.SweepSelect_selectedSize){
-                selectedSize=typedArray.getDimensionPixelSize(i,DEFAULT_TEXT_SIZE);
+                selectedSize=typedArray.getDimensionPixelSize(type,DEFAULT_TEXT_SIZE);
             }else if (type==R.styleable.SweepSelect_normalSize){
-                normalSize=typedArray.getDimensionPixelSize(i,DEFAULT_TEXT_SIZE);
-            }else if (type==R.styleable.SweepSelect_corner){
-                corner=typedArray.getDimensionPixelSize(i,DEFAULT_CORNER);
+                normalSize=typedArray.getDimensionPixelSize(type,DEFAULT_TEXT_SIZE);
             }else if (type==R.styleable.SweepSelect_multyChooseMode){
-                isMultyChooseMode=typedArray.getBoolean(i,false);
+                isMultyChooseMode=typedArray.getBoolean(type,false);
+            }else if (type==R.styleable.SweepSelect_singleLine){
+                singleLine=typedArray.getBoolean(type,false);
+            }else if (type==R.styleable.SweepSelect_numberEachLine){
+                numberEachLine=typedArray.getInt(type,DEFAULT_NUMBER_EACH_LINE);
+            }else if (type==R.styleable.SweepSelect_spaceEachLine){
+                spaceEachLine=typedArray.getDimensionPixelSize(type,-1);
+            }else if (type==R.styleable.SweepSelect_emptyPrefix){
+                emptyPrefix=typedArray.getInt(type,DEFAULT_EMPTY_PREFIX);
             }
         }
         typedArray.recycle();
@@ -112,28 +124,62 @@ public class SweepSelect extends View {
             itemStrings=new CharSequence[1];
             itemStrings[0]=new String("");
         }
-        items=new Item[itemStrings.length];
-        for (int i=0;i<itemStrings.length;i++){
-            sb.append(itemStrings[i]);
-            Item item=new Item();
-            item.itemName=itemStrings[i].toString();
-            item.isSeledted=false;
-            item.hasChangedSinceActionDown=false;
-            items[i]=item;
-        }
-        String text=sb.toString();
-        backgroundPaint=new Paint();
-        backgroundPaint.setColor(backgroundColor);
-        backgroundPaint.setAntiAlias(true);
+
+
         textPaint=new TextPaint();
         textPaint.setTextSize(Math.max(selectedSize,normalSize));
         textPaint.setAntiAlias(true);
 
         textRect =new Rect();
+
+        if (singleLine){
+            lines=1;
+        }else {
+            lines= (int) Math.ceil(((double)itemStrings.length+emptyPrefix)/numberEachLine);
+        }
+
+//        items=new Item[itemStrings.length];
+        items=new Item[lines*numberEachLine];
+        for (int l=0;l<lines;l++) {
+            int start=0;
+            if (l==0){
+                start=emptyPrefix;
+                for (int i = 0; i < emptyPrefix; i++) {
+                    sb.append("");
+                    Item item = new Item();
+                    item.itemName = "";
+                    item.isSeledted = false;
+                    item.hasGetPressForcus = false;
+                    items[i] = item;
+                }
+            }
+            for (int i = start; i < numberEachLine; i++) {
+                if (l*numberEachLine-emptyPrefix+i<itemStrings.length) {
+                    sb.append(itemStrings[l * numberEachLine - emptyPrefix + i]);
+                    Item item = new Item();
+                    item.itemName = itemStrings[l * numberEachLine - emptyPrefix+i].toString();
+                    item.isSeledted = false;
+                    item.hasGetPressForcus = false;
+                    items[l * numberEachLine + i] = item;
+                }else {
+                    sb.append("");
+                    Item item = new Item();
+                    item.itemName = "";
+                    item.isSeledted = false;
+                    item.hasGetPressForcus = false;
+                    items[l * numberEachLine + i] = item;
+                }
+            }
+        }
+        String text=sb.toString();
         text = (String) TextUtils.ellipsize(text, textPaint, 1080, TextUtils.TruncateAt.END);
         textPaint.getTextBounds(text, 0, text.length(), textRect);
-
-        textPaint.getTextBounds(text,0,text.length(), textRect);
+        if (spaceEachLine==-1){
+            _spaceEachLine=textRect.height()/2;
+        }else {
+            _spaceEachLine=spaceEachLine;
+        }
+        totalHeight=textRect.height()*(lines)+(lines+1)*(_spaceEachLine);
     }
 
     @Override
@@ -141,10 +187,10 @@ public class SweepSelect extends View {
         int heightMode=MeasureSpec.getMode(heightMeasureSpec);
         if (heightMode==MeasureSpec.AT_MOST){
             int atMostHeight=MeasureSpec.getSize(heightMeasureSpec);
-            int height= textRect.height()*3/2+corner;
+            int height= totalHeight;
             heightMeasureSpec=MeasureSpec.makeMeasureSpec(Math.min(height,atMostHeight),heightMode);
         }else if (heightMode==MeasureSpec.UNSPECIFIED){
-            int height= textRect.height()*3/2+corner;
+            int height= totalHeight;
             heightMeasureSpec=MeasureSpec.makeMeasureSpec(height,heightMode);
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -154,30 +200,38 @@ public class SweepSelect extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         //尺寸变化时，重新测量每个元素的位置
-        backgroundRect=null;
+        sizeHasChanged=true;
     }
 
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        int width=getWidth();
-        int heigh=getHeight();
-        if (backgroundRect==null) {
-            backgroundRect = new RectF(0, 0, width, heigh);
-            int count=items.length;
-            int unitWidth=width/count;
-            for (int i=0;i<count;i++){
-                items[i].startPixel=unitWidth*i;
-                items[i].endPixel=unitWidth*(i+1);
-                items[i].height=heigh;
-            }
+        if(getBackground()==null){
+            setBackgroundResource(R.drawable.dafault_background);
         }
-        drawBackground(canvas);
+
+        if (sizeHasChanged) {
+            measureItem();
+            sizeHasChanged=false;
+        }
         drawText(canvas);
     }
 
-    private void drawBackground(Canvas canvas){
-        canvas.drawRoundRect(backgroundRect,corner,corner,backgroundPaint);
+    private void measureItem() {
+        int width=getWidth();
+        int heigh=getHeight();
+        int count=numberEachLine;
+        int unitWidth=width/count;
+
+        for (int l=0;l<lines;l++) {
+            for (int i = 0; i < numberEachLine; i++) {
+                int pos=l*numberEachLine+i;
+                items[pos].startXPixel = unitWidth * i;
+                items[pos].endXPixel = unitWidth * (i + 1);
+                items[pos].startYPixel = textRect.height()*l+(l+1f/2)*_spaceEachLine;
+                items[pos].endYPixel = items[pos].startYPixel+textRect.height()+_spaceEachLine;
+            }
+        }
     }
 
     private void drawText(Canvas canvas){
@@ -189,27 +243,36 @@ public class SweepSelect extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x= event.getX();
+        float y= event.getY();
         switch (event.getAction()){
             case MotionEvent.ACTION_DOWN:
                 getParent().requestDisallowInterceptTouchEvent(true);
                 //防止父View抢夺触摸焦点，导致触摸事件失效
                 lastX=event.getX();
-                currentDirection =DIRECTION_NON;
+                lastY=event.getY();
+                currentXDirection =DIRECTION_NON;
+                currentYDirection =DIRECTION_NON;
                 checkSelect(event);
                 invalidate();
                 return true;
             case MotionEvent.ACTION_MOVE:
                 //当滑动距离小于最低限度时，视为未滑动，防止出现抖动现象
-                if (Math.abs(x-lastX)<MIN_SCROLL_DISTANCE){
+                if (Math.abs(x-lastX)<MIN_SCROLL_DISTANCE && Math.abs(y-lastY)<MIN_SCROLL_DISTANCE){
                     return true;
                 }
                 if (x > lastX) {
-                    currentDirection = DIRECTION_RIGHT;
+                    currentXDirection = DIRECTION_RIGHT;
                 } else {
-                    currentDirection = DIRECTION_LEFT;
+                    currentXDirection = DIRECTION_LEFT;
+                }
+                if (y > lastY) {
+                    currentXDirection = DIRECTION_DOWN;
+                } else {
+                    currentXDirection = DIRECTION_UP;
                 }
                 checkSelect(event);
                 lastX = event.getX();
+                lastY=event.getY();
                 invalidate();
                 return true;
             case MotionEvent.ACTION_UP:
@@ -217,7 +280,9 @@ public class SweepSelect extends View {
                 onSelectResult();
                 //清理标记位
                 lastX=-1;
-                currentDirection =DIRECTION_NON;
+                lastY=-1;
+                currentXDirection =DIRECTION_NON;
+                currentYDirection =DIRECTION_NON;
                 invalidate();
                 return true;
         }
@@ -226,31 +291,55 @@ public class SweepSelect extends View {
 
     private void onSelectResult() {
         //统计选中情况，并调用回调函数
-        boolean[] selections=new boolean[items.length];
-        for (int i=0;i<items.length;i++){
-            selections[i]=items[i].isSeledted;
-            items[i].hasChangedSinceActionDown=false;
-            items[i].lastDirection=DIRECTION_NON;
+        boolean[] selections=new boolean[itemStrings.length];
+        for (int i=emptyPrefix;i<items.length;i++){
+            if (TextUtils.isEmpty(items[i].itemName)){
+                continue;
+            }
+            selections[i-emptyPrefix]=items[i].isSeledted;
+            items[i].hasGetPressForcus =false;
+            items[i].lastXDirection=DIRECTION_NON;
+            items[i].lastYDirection=DIRECTION_NON;
         }
         if (onSelectResultListener!=null){
             onSelectResultListener.select(selections);
         }
     }
 
+    private int lastSingleChooseId;
+    private boolean hasSelected;
     private void checkSelect(MotionEvent event){
-        for (Item item:items){
-            item.press(event.getX());
-        }
+            if (!isMultyChooseMode){
+                hasSelected=false;
+                for (int i=0;i<items.length;i++){
+                    Item item=items[i];
+                    if (!TextUtils.isEmpty(item.itemName) && item.press(event.getX(),event.getY())){
+                        lastSingleChooseId=i;
+                        hasSelected=true;
+                    }
+                }
+                if (!hasSelected){
+                    items[lastSingleChooseId].isSeledted=true;
+                }
+                //单选模式下，要对空白的地方进行排除
+            }else {
+                for (int i=0;i<items.length;i++){
+                    Item item=items[i];
+                    item.press(event.getX(),event.getY());
+                }
+            }
     }
 
     private class Item {
         String itemName;
-        float startPixel;
-        float endPixel;
-        float height;
+        float startXPixel;
+        float startYPixel;
+        float endXPixel;
+        float endYPixel;
         boolean isSeledted;
-        boolean hasChangedSinceActionDown;
-        int lastDirection;
+        boolean hasGetPressForcus;
+        int lastXDirection;
+        int lastYDirection;
         Rect textRect=new Rect();
         void drawSelf(Canvas canvas){
             if (isSeledted){
@@ -261,30 +350,38 @@ public class SweepSelect extends View {
                 textPaint.setTextSize(normalSize);
             }
             textPaint.getTextBounds(itemName,0,itemName.length(),textRect);
-            canvas.drawText(itemName,(startPixel+endPixel-textRect.width())/2,(height+textRect.height())/2,textPaint);
+            canvas.drawText(itemName,startXPixel+(endXPixel-startXPixel-textRect.width())/2,startYPixel+(endYPixel-startYPixel+textRect.height())/2,textPaint);
         }
 
-        void press(float x){
+        boolean press(float x,float y){
             if (isMultyChooseMode) {
                 //多选模式下，要根据左右滑动的方向变化来修改选择状态
-                if (startPixel<=x&&endPixel>x){
-                    if (!hasChangedSinceActionDown ||
-                            (lastDirection != DIRECTION_NON && currentDirection != lastDirection)) {
+                if (startXPixel<=x&&endXPixel>x&&startYPixel<=y&&endYPixel>y){
+//                    if (!hasGetPressForcus ||
+//                            (lastXDirection != DIRECTION_NON && currentXDirection != lastXDirection)||
+//                            (lastYDirection != DIRECTION_NON && currentYDirection != lastYDirection)) {
+                    if (!hasGetPressForcus){
                         isSeledted = !isSeledted;
-                        hasChangedSinceActionDown = true;
-                        lastDirection = currentDirection;
+                        hasGetPressForcus = true;
+                        lastXDirection = currentXDirection;
+                        lastYDirection = currentYDirection;
                     }
-                    if (lastDirection == DIRECTION_NON && currentDirection != DIRECTION_NON) {
-                        lastDirection = currentDirection;
-                    }
+//                    if ((lastXDirection == DIRECTION_NON && currentXDirection != DIRECTION_NON)||
+//                            (lastYDirection == DIRECTION_NON && currentYDirection != DIRECTION_NON)) {
+//                        lastXDirection = currentXDirection;
+//                        lastYDirection = currentYDirection;
+//                    }
+                }else {
+                    hasGetPressForcus=false;
                 }
             }else {
-                if (startPixel<=x&&endPixel>x){
+                if (startXPixel<=x&&endXPixel>x&&startYPixel<=y&&endYPixel>y){
                     isSeledted=true;
                 }else {
                     isSeledted=false;
                 }
             }
+            return isSeledted;
         }
     }
 
@@ -314,8 +411,12 @@ public class SweepSelect extends View {
             return;
         }
         for (int i=0;i<selections.length;i++){
+            items[i].isSeledted=false;
+        }
+        for (int i=0;i<selections.length;i++){
             items[i].isSeledted=selections[i];
             if (!isMultyChooseMode&&selections[i]){
+                lastSingleChooseId=i;
                 break;
             }
         }
@@ -430,38 +531,68 @@ public class SweepSelect extends View {
     }
 
     /**
-     * 获取背景的圆角半径，单位为像素
-     * @return
+     * 是否单行显示
      */
-    public int getCorner() {
-        return corner;
+    public boolean isSingleLine() {
+        return singleLine;
     }
-
     /**
-     * 设置背景的圆角半径，单位为像素
-     * @param corner
+     * 设置是否单行显示
+     * @param singleLine true为单行显示
      */
-    public void setCorner(int corner) {
-        this.corner = corner;
+    public void setSingleLine(boolean singleLine) {
+        this.singleLine = singleLine;
         prepareDrawing();
         requestLayout();
     }
 
     /**
-     * 获取背景的颜色，argb表示
-     * @return
+     * 获取每行显示数量，默认是7
      */
-    public int getBackgroundColor() {
-        return backgroundColor;
+    public int getNumberEachLine() {
+        return numberEachLine;
     }
 
     /**
-     * 设置背景的颜色，argb表示
-     * @param backgroundColor
+     * 设置每行显示数量，默认是7
+     * @param numberEachLine
      */
-    @Override
-    public void setBackgroundColor(int backgroundColor) {
-        this.backgroundColor = backgroundColor;
+    public void setNumberEachLine(int numberEachLine) {
+        this.numberEachLine = numberEachLine;
+        prepareDrawing();
+        requestLayout();
+    }
+
+    /**
+     * 获取每行间的距离，默认是文字高度的一半
+     */
+    public int getSpaceEachLine() {
+        return spaceEachLine;
+    }
+
+    /**
+     * 设置每行间的距离，默认是文字高度的一半
+     * @param spaceEachLine
+     */
+    public void setSpaceEachLine(int spaceEachLine) {
+        this.spaceEachLine = spaceEachLine;
+        prepareDrawing();
+        requestLayout();
+    }
+
+    /**
+     * 获取第一行的第一行的空白前缀的数量
+     */
+    public int getEmptyPrefix() {
+        return emptyPrefix;
+    }
+
+    /**
+     * 设置第一行的第一行的空白前缀的数量
+     * @param emptyPrefix
+     */
+    public void setEmptyPrefix(int emptyPrefix) {
+        this.emptyPrefix = emptyPrefix;
         prepareDrawing();
         requestLayout();
     }

@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="SweepSelect">
-        <attr name="backgroundColor" format="reference"/>
-        <attr name="itemString" format="reference"/>
-        <attr name="selectedColor" format="reference"/>
-        <attr name="normalColor" format="reference"/>
-        <attr name="selectedSize" format="dimension"/>
-        <attr name="normalSize" format="dimension"/>
-        <attr name="corner" format="dimension"/>
-        <attr name="multyChooseMode" format="boolean"/>
+        <attr name="itemString" format="reference" />
+        <attr name="selectedColor" format="reference" />
+        <attr name="normalColor" format="reference" />
+        <attr name="selectedSize" format="dimension" />
+        <attr name="normalSize" format="dimension" />
+        <attr name="singleLine" format="boolean" />
+        <attr name="numberEachLine" format="integer" />
+        <attr name="spaceEachLine" format="dimension" />
+        <attr name="emptyPrefix" format="integer" />
+        <attr name="multyChooseMode" format="boolean" />
     </declare-styleable>
 
 </resources>
