@@ -184,13 +184,14 @@ public class SweepSelect extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int heightPadding = getPaddingTop()+getPaddingBottom();
         int heightMode=MeasureSpec.getMode(heightMeasureSpec);
         if (heightMode==MeasureSpec.AT_MOST){
             int atMostHeight=MeasureSpec.getSize(heightMeasureSpec);
-            int height= totalHeight;
+            int height= totalHeight+heightPadding;
             heightMeasureSpec=MeasureSpec.makeMeasureSpec(Math.min(height,atMostHeight),heightMode);
         }else if (heightMode==MeasureSpec.UNSPECIFIED){
-            int height= totalHeight;
+            int height= totalHeight+heightPadding;
             heightMeasureSpec=MeasureSpec.makeMeasureSpec(height,heightMode);
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -220,16 +221,20 @@ public class SweepSelect extends View {
     private void measureItem() {
         int width=getWidth();
         int heigh=getHeight();
+        int paddingLeft = getPaddingLeft();
+        int paddingRight = getPaddingRight();
+        int paddingTop = getPaddingTop();
+        int paddingBottom = getPaddingBottom();
         int count=numberEachLine;
-        int unitWidth=width/count;
+        int unitWidth= (width-paddingLeft-paddingRight) /count;
 
         for (int l=0;l<lines;l++) {
             for (int i = 0; i < numberEachLine; i++) {
                 int pos=l*numberEachLine+i;
-                items[pos].startXPixel = unitWidth * i;
-                items[pos].endXPixel = unitWidth * (i + 1);
-                items[pos].startYPixel = textRect.height()*l+(l+1f/2)*_spaceEachLine;
-                items[pos].endYPixel = items[pos].startYPixel+textRect.height()+_spaceEachLine;
+                items[pos].startXPixel = paddingLeft+unitWidth * i;
+                items[pos].endXPixel = paddingLeft+unitWidth * (i + 1);
+                items[pos].startYPixel = paddingTop+textRect.height()*l+(l+1f/2)*_spaceEachLine;
+                items[pos].endYPixel =  items[pos].startYPixel+textRect.height()+_spaceEachLine;
             }
         }
     }
