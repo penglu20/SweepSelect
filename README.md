@@ -14,7 +14,7 @@ add to your build.gradle files:
 
 ```
 dependencies {
-    compile 'com.pl:SweepSelect:0.2.1'
+    compile 'com.pl:SweepSelect:0.2.2'
 }
 ```
 
