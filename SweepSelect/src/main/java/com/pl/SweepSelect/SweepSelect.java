@@ -62,6 +62,7 @@ public class SweepSelect extends View {
 
   // 选中结果回调函数
   private onSelectResultListener onSelectResultListener;
+  private boolean hasTriggerLongClick;
 
   public SweepSelect(Context context) {
     super(context);
@@ -117,6 +118,7 @@ public class SweepSelect extends View {
 
   private void prepareDrawing() {
     // 根据当前设置的属性生成变量
+    sizeHasChanged = true;
     StringBuilder sb = new StringBuilder();
     if (itemStrings == null) {
       itemStrings = new CharSequence[1];
@@ -246,6 +248,7 @@ public class SweepSelect extends View {
       new Runnable() {
         @Override
         public void run() {
+          hasTriggerLongClick = true;
           Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
           vibrator.vibrate(50);
           if (onSelectResultListener != null) {
@@ -271,6 +274,7 @@ public class SweepSelect extends View {
     float y = event.getY();
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
+        hasTriggerLongClick = false;
         getParent().requestDisallowInterceptTouchEvent(true);
         // 防止父View抢夺触摸焦点，导致触摸事件失效
         lastX = event.getX();
@@ -321,6 +325,9 @@ public class SweepSelect extends View {
 
   private void onSelectResult() {
     // 统计选中情况，并调用回调函数
+    if (hasTriggerLongClick) {
+      return;
+    }
     boolean[] selections = new boolean[itemStrings.length];
     for (int i = emptyPrefix; i < items.length; i++) {
       if (TextUtils.isEmpty(items[i].itemName)) {
