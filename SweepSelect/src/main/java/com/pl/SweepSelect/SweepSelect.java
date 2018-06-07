@@ -15,6 +15,10 @@ import android.view.View;
 
 /** Created by penglu on 2016/5/22. */
 public class SweepSelect extends View {
+  public static final int MultySweep = 0; // isMultyChooseMode =true;
+  public static final int SingleSweep = 1; // isMultyChooseMode =false; isSingleTapMode=false;
+  public static final int SingleTap = 2; // isMultyChooseMode =false; isSingleTapMode=true;
+
   // 默认属性
   private static final int DEFAULT_SELECTED_COLOR = -1;
   private static final int DEFAULT_NORMAL_COLOR = 7500402;
@@ -40,6 +44,7 @@ public class SweepSelect extends View {
   private int normalColor = DEFAULT_NORMAL_COLOR;
   private int normalSize = DEFAULT_TEXT_SIZE;
   private boolean isMultyChooseMode = false;
+  private boolean isSingleTapMode = false;
   private boolean singleLine = true;
   private int numberEachLine = DEFAULT_NUMBER_EACH_LINE;
   private int spaceEachLine = -1;
@@ -63,6 +68,7 @@ public class SweepSelect extends View {
   // 选中结果回调函数
   private onSelectResultListener onSelectResultListener;
   private boolean hasTriggerLongClick;
+  private boolean hasSweeped;
 
   public SweepSelect(Context context) {
     super(context);
@@ -100,8 +106,18 @@ public class SweepSelect extends View {
         selectedSize = typedArray.getDimensionPixelSize(type, DEFAULT_TEXT_SIZE);
       } else if (type == R.styleable.SweepSelect_normalSize) {
         normalSize = typedArray.getDimensionPixelSize(type, DEFAULT_TEXT_SIZE);
-      } else if (type == R.styleable.SweepSelect_multyChooseMode) {
-        isMultyChooseMode = typedArray.getBoolean(type, false);
+      } else if (type == R.styleable.SweepSelect_chooseMode) {
+        int mode = typedArray.getInt(type, MultySweep);
+        if (mode == MultySweep) {
+          isMultyChooseMode = true;
+          isSingleTapMode = false;
+        } else if (mode == SingleSweep) {
+          isMultyChooseMode = false;
+          isSingleTapMode = false;
+        } else if (mode == SingleTap) {
+          isMultyChooseMode = false;
+          isSingleTapMode = true;
+        }
       } else if (type == R.styleable.SweepSelect_singleLine) {
         singleLine = typedArray.getBoolean(type, false);
       } else if (type == R.styleable.SweepSelect_numberEachLine) {
@@ -260,8 +276,8 @@ public class SweepSelect extends View {
                 index = i - emptyPrefix;
                 item.isSeledted = !item.isSeledted;
                 selection = item.isSeledted;
-                break;
               }
+              item.press(lastX, lastY);
             }
             onSelectResultListener.onLongClicked(index, selection);
           }
@@ -275,14 +291,19 @@ public class SweepSelect extends View {
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
         hasTriggerLongClick = false;
-        getParent().requestDisallowInterceptTouchEvent(true);
+        hasSweeped = false;
+        if (!isSingleTapMode) {
+          getParent().requestDisallowInterceptTouchEvent(true);
+        }
         // 防止父View抢夺触摸焦点，导致触摸事件失效
         lastX = event.getX();
         lastY = event.getY();
         currentXDirection = DIRECTION_NON;
         currentYDirection = DIRECTION_NON;
         postDelayed(longClickRunnable, 500);
-        checkSelect(event);
+        if (!isSingleTapMode) {
+          checkSelect(event);
+        }
         invalidate();
         return true;
       case MotionEvent.ACTION_MOVE:
@@ -291,6 +312,7 @@ public class SweepSelect extends View {
             && Math.abs(y - lastY) < MIN_SCROLL_DISTANCE) {
           return true;
         }
+        hasSweeped = true;
         removeCallbacks(longClickRunnable);
         if (x > lastX) {
           currentXDirection = DIRECTION_RIGHT;
@@ -302,6 +324,10 @@ public class SweepSelect extends View {
         } else {
           currentXDirection = DIRECTION_UP;
         }
+        if (isSingleTapMode && hasSweeped) {
+          invalidate();
+          return false;
+        }
         checkSelect(event);
         lastX = event.getX();
         lastY = event.getY();
@@ -310,6 +336,10 @@ public class SweepSelect extends View {
       case MotionEvent.ACTION_UP:
       case MotionEvent.ACTION_CANCEL:
         removeCallbacks(longClickRunnable);
+        if (isSingleTapMode && hasSweeped) {
+          invalidate();
+          return false;
+        }
         checkSelect(event);
         onSelectResult();
         // 清理标记位

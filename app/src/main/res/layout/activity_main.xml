@@ -22,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:itemString="@array/multyChooseArray"
-        app:multyChooseMode="true"
+        app:chooseMode="multySweep"
         app:normalColor="@color/white"
         app:normalSize="16sp"
         app:selectedColor="@color/yellow"
@@ -30,16 +30,16 @@
 
 
     <com.pl.sweepselect.SweepSelect
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:paddingTop="100dp"
-      android:paddingLeft="50dp"
-      app:itemString="@array/multyChooseArray"
-      app:multyChooseMode="true"
-      app:normalColor="@color/white"
-      app:normalSize="16sp"
-      app:selectedColor="@color/yellow"
-      app:selectedSize="20sp" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="100dp"
+        android:paddingLeft="50dp"
+        app:itemString="@array/multyChooseArray"
+        app:chooseMode="multySweep"
+        app:normalColor="@color/white"
+        app:normalSize="16sp"
+        app:selectedColor="@color/yellow"
+        app:selectedSize="20sp" />
 
     <TextView
         android:id="@+id/select_result2"
@@ -52,6 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:emptyPrefix="3"
+        app:chooseMode="singleSweep"
         app:numberEachLine="7"
         app:spaceEachLine="40dp"
         app:singleLine="false" />

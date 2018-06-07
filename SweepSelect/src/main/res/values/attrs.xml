@@ -10,7 +10,11 @@
         <attr name="numberEachLine" format="integer" />
         <attr name="spaceEachLine" format="dimension" />
         <attr name="emptyPrefix" format="integer" />
-        <attr name="multyChooseMode" format="boolean" />
+        <attr name="chooseMode" format="enum">
+            <enum name="multySweep" value="0" />
+            <enum name="singleSweep" value="1" />
+            <enum name="singleTap" value="2" />
+        </attr>
     </declare-styleable>
 
 </resources>
