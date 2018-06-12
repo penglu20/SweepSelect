@@ -333,8 +333,11 @@ public class SweepSelect extends View {
         lastY = event.getY();
         invalidate();
         return true;
-      case MotionEvent.ACTION_UP:
       case MotionEvent.ACTION_CANCEL:
+        if (isSingleTapMode){
+          hasSweeped = true;
+        }
+      case MotionEvent.ACTION_UP:
         removeCallbacks(longClickRunnable);
         if (isSingleTapMode && hasSweeped) {
           invalidate();

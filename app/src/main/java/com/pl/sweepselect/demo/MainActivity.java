@@ -43,11 +43,13 @@ public class MainActivity extends AppCompatActivity {
               return;
             }
             CharSequence[] items = select.getItemStrings();
+            items[index] = "aa";
             Toast.makeText(
                     MainActivity.this,
                     "selected=" + items[index] + ",selection=" + selection,
                     Toast.LENGTH_SHORT)
                 .show();
+            select.setItemStrings(items);
           }
         });
 
